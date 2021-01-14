@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>机器硬件CPU与java内存模型 | BubbleTg</title>
+  <meta name="description" content="（声明：本文为java高并发编程详解 汪文君 著 的学习笔记，绝大多数来源原书） 机器硬件CPU与java内存模型1. 机器硬件CPU​        计算机中，所有的运算操作都是由CPU的寄存器来完成的，CPU指令的执行过程需要涉及数据的读取和写人操作，CPU所能访问的所有数据只能是计算机的主存(通常是指RAM)，但是CPU与RAM的速度差距巨大，便有了CPU Cache 模型。 1.1 CPU">
+<meta property="og:type" content="article">
+<meta property="og:title" content="机器硬件CPU与java内存模型">
+<meta property="og:url" content="https://blog.bubbletg.cn/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/index.html">
+<meta property="og:site_name" content="BubbleTg">
+<meta property="og:description" content="（声明：本文为java高并发编程详解 汪文君 著 的学习笔记，绝大多数来源原书） 机器硬件CPU与java内存模型1. 机器硬件CPU​        计算机中，所有的运算操作都是由CPU的寄存器来完成的，CPU指令的执行过程需要涉及数据的读取和写人操作，CPU所能访问的所有数据只能是计算机的主存(通常是指RAM)，但是CPU与RAM的速度差距巨大，便有了CPU Cache 模型。 1.1 CPU">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://blog.bubbletg.cn/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/Cache%E4%B8%8E%E4%B8%BB%E5%AD%98%E8%AE%BF%E9%97%AE%E8%BF%87%E9%80%9F%E5%BA%A6%E5%AF%B9%E6%AF%94.png">
+<meta property="og:image" content="https://blog.bubbletg.cn/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/CPU%E9%80%9A%E8%BF%87Cache%E4%B8%8E%E4%B8%BB%E5%86%85%E5%AD%98%E8%BF%9B%E8%A1%8C%E4%BA%A4%E4%BA%92.png">
+<meta property="og:image" content="https://blog.bubbletg.cn/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/%E7%BC%93%E5%AD%98%E4%B8%80%E8%87%B4%E5%8D%8F%E8%AE%AE.png">
+<meta property="og:image" content="https://blog.bubbletg.cn/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/java%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B.png">
+<meta property="og:image" content="https://blog.bubbletg.cn/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/%E4%BA%A4%E4%BA%92.png">
+<meta property="article:published_time" content="2019-09-01T01:28:28.000Z">
+<meta property="article:modified_time" content="2021-01-14T01:05:55.864Z">
+<meta property="article:author" content="BubbleTg">
+<meta property="article:tag" content="java">
+<meta property="article:tag" content="多线程">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://blog.bubbletg.cn/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/Cache%E4%B8%8E%E4%B8%BB%E5%AD%98%E8%AE%BF%E9%97%AE%E8%BF%87%E9%80%9F%E5%BA%A6%E5%AF%B9%E6%AF%94.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://blog.bubbletg.cn/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="BubbleTg" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.1.1"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/bubbletg" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">BubbleTg</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">JAVA Developer &amp; Student</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/bubbletg" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/bubbletg" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/bubbletg" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p> QQ：363491343<br>
+微信：tiangui_<br>
+我的个人网站：<a href="http://www.bubbletg.cn" target="view_window">www.bubbletg.cn</a><br>
+我的博客：<a href="http://blog.bubbletg.cn" target="view_window">blog.bubbletg.cn</a><br>
+我的GitHub：<a href="https://github.com/bubbletg" target="view_window">https://github.com/bubbletg</a><br> </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/CSS/">CSS</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/HTTP/">HTTP</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/JavaScript/">JavaScript</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Spring/">Spring</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">6</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95/">排序算法</a><span class="category-list-count">6</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%8D%E5%8A%A1%E4%B8%8E%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85/">服务与软件安装</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%8D%E5%8A%A1%E5%99%A8/">服务器</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%B5%8F%E8%A7%88%E5%99%A8/">浏览器</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E7%BB%83%E4%B9%A0/">编程练习</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/">软件测试</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%9D%A2%E8%AF%95%E9%A2%98/">面试题</a><span class="category-list-count">3</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CSS/" rel="tag">CSS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CSS%E5%8A%A8%E7%94%BB/" rel="tag">CSS动画</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux-%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="tag">Linux 服务器</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RabbitMQ/" rel="tag">RabbitMQ</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Spring/" rel="tag">Spring</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/http%E5%8D%8F%E8%AE%AE/" rel="tag">http协议</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">15</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/js%E4%BA%8B%E4%BB%B6/" rel="tag">js事件</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/js%E5%9F%BA%E7%A1%80/" rel="tag">js基础</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%B7%E9%A2%98/" rel="tag">刷题</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="tag">服务器</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B5%8F%E8%A7%88%E5%99%A8%E7%BC%93%E5%AD%98/" rel="tag">浏览器缓存</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a><span class="tag-list-count">11</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" rel="tag">计算机网络</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%B7%A8%E5%9F%9F/" rel="tag">跨域</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/" rel="tag">软件测试</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9D%A2%E8%AF%95/" rel="tag">面试</a><span class="tag-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/CSS/" style="font-size: 13px;">CSS</a> <a href="/tags/CSS%E5%8A%A8%E7%94%BB/" style="font-size: 13px;">CSS动画</a> <a href="/tags/JVM/" style="font-size: 13px;">JVM</a> <a href="/tags/Linux-%E6%9C%8D%E5%8A%A1%E5%99%A8/" style="font-size: 13px;">Linux 服务器</a> <a href="/tags/RabbitMQ/" style="font-size: 13px;">RabbitMQ</a> <a href="/tags/Spring/" style="font-size: 13.25px;">Spring</a> <a href="/tags/http%E5%8D%8F%E8%AE%AE/" style="font-size: 13px;">http协议</a> <a href="/tags/java/" style="font-size: 14px;">java</a> <a href="/tags/js%E4%BA%8B%E4%BB%B6/" style="font-size: 13px;">js事件</a> <a href="/tags/js%E5%9F%BA%E7%A1%80/" style="font-size: 13.25px;">js基础</a> <a href="/tags/%E5%88%B7%E9%A2%98/" style="font-size: 13px;">刷题</a> <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" style="font-size: 13.5px;">多线程</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 13px;">数据库</a> <a href="/tags/%E6%9C%8D%E5%8A%A1%E5%99%A8/" style="font-size: 13px;">服务器</a> <a href="/tags/%E6%B5%8F%E8%A7%88%E5%99%A8%E7%BC%93%E5%AD%98/" style="font-size: 13px;">浏览器缓存</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 13.75px;">算法</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" style="font-size: 13.5px;">计算机网络</a> <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" style="font-size: 13.25px;">设计模式</a> <a href="/tags/%E8%B7%A8%E5%9F%9F/" style="font-size: 13px;">跨域</a> <a href="/tags/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/" style="font-size: 13.25px;">软件测试</a> <a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 13.25px;">面试</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/12/">十二月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/10/">十月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/09/">九月 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">十一月 2019</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/02/">二月 2019</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/01/">一月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">四月 2018</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">一月 2017</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%B5%8F%E8%A7%88%E5%99%A8/">浏览器</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/12/24/%E8%A7%A3%E5%86%B3%E8%B7%A8%E5%9F%9F%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/" class="title">解决跨域问题的几种方案</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-12-24T10:01:53.000Z" itemprop="datePublished">2020-12-24</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/HTTP/">HTTP</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/10/10/http%E5%8D%8F%E8%AE%AE%E4%B8%8E%E7%BC%93%E5%AD%98/" class="title">http协议与缓存</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-10-10T15:23:53.000Z" itemprop="datePublished">2020-10-10</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/JavaScript/">JavaScript</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/09/24/%E4%BD%A0%E7%9C%9F%E7%9A%84%E7%90%86%E8%A7%A3%20%E4%BA%8B%E4%BB%B6%E5%86%92%E6%B3%A1%20%E5%92%8C%20%E4%BA%8B%E4%BB%B6%E6%8D%95%E8%8E%B7%20%E5%90%97%EF%BC%9F/" class="title">你真的理解事件冒泡和事件捕获吗？</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-09-24T13:22:53.000Z" itemprop="datePublished">2020-09-24</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/JavaScript/">JavaScript</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/09/22/%E6%89%8B%E5%86%99%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B7%B1%E5%BA%A6%E6%AF%94%E8%BE%83/" class="title">手写深拷贝与深度比较</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-09-22T15:01:53.000Z" itemprop="datePublished">2020-09-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/JavaScript/">JavaScript</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/09/21/%E6%89%8B%E5%86%99%EF%BC%9Anew,call,apply/" class="title">手写：new,call,apply</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-09-21T12:01:53.000Z" itemprop="datePublished">2020-09-21</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-机器硬件CPU与java内存模型" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      机器硬件CPU与java内存模型
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/" class="article-date">
+	  <time datetime="2019-09-01T01:28:28.000Z" itemprop="datePublished">2019-09-01</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/java/">java</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/java/" rel="tag">java</a>, <a class="article-tag-link-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p><u>（声明：本文为java高并发编程详解 汪文君 著 的学习笔记，绝大多数来源原书）</u></p>
+<h1 id="机器硬件CPU与java内存模型"><a href="#机器硬件CPU与java内存模型" class="headerlink" title="机器硬件CPU与java内存模型"></a>机器硬件CPU与java内存模型</h1><h2 id="1-机器硬件CPU"><a href="#1-机器硬件CPU" class="headerlink" title="1. 机器硬件CPU"></a>1. 机器硬件CPU</h2><p>​        计算机中，所有的运算操作都是由CPU的寄存器来完成的，CPU指令的执行过程需要涉及数据的读取和写人操作，CPU所能访问的所有数据只能是计算机的主存(通常是指RAM)，但是CPU与RAM的速度差距巨大，便有了CPU Cache 模型。</p>
+<h3 id="1-1-CPU-cache-模型"><a href="#1-1-CPU-cache-模型" class="headerlink" title="1.1 CPU cache 模型"></a>1.1 CPU cache 模型</h3><p>​        由于CPU与主存速验证不相等，导致CPU资源受到大量的限制，降低CPU整体的吞吐量，于是就有了在CPU和主内存之间增加缓存的设计，现在缓存的数量都可以增加到3级了，最靠近CPU的缓存称为L1,然后依次是L2, L3和主内存，CPU缓存模型如图所示。</p>
+<p>​    <img src="/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/Cache%E4%B8%8E%E4%B8%BB%E5%AD%98%E8%AE%BF%E9%97%AE%E8%BF%87%E9%80%9F%E5%BA%A6%E5%AF%B9%E6%AF%94.png" class=""></p>
+<p>​    Cache的出现是为了解决CPU直接访问内存效率低下问题的，程序在运行的过程中，会将运算所需要的数据从主存复制一份到CPU Cache中，这样CPU进行计算时就可以直接对CPU Cache中的数据进行读取和写人，当运算结束之后，再将CPUCache中的最新数据刷新到主内存当中，CPU通过直接访问Cache的方式CPU Cache替代直接访问主存的方式极大地提高了CPU的吞吐能力，有了CPU Cache之后，整体的CPU主内存(RAM)和主内存之间交互的架构大致如图所示。</p>
+<img src="/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/CPU%E9%80%9A%E8%BF%87Cache%E4%B8%8E%E4%B8%BB%E5%86%85%E5%AD%98%E8%BF%9B%E8%A1%8C%E4%BA%A4%E4%BA%92.png" class="">
+
+<h3 id="1-2-CPU-缓存一致性问题"><a href="#1-2-CPU-缓存一致性问题" class="headerlink" title="1.2 CPU 缓存一致性问题"></a>1.2 CPU 缓存一致性问题</h3><p>​    在i++这个操作，在程序的运行过程中，首先需要将主内存中的数据复制一份存放到CPU Cache中，那么CPU寄存器在进行数值计算的时候就直接到Cache中读取和写人，当整个过程运算结束之后再将Cache中的数据刷新到主存当中，具体过程如下。<br>​    1 )读取主内存的i到CPU Cache中。<br>​    2)对i进行加一-操作。<br>​    3)将结果写回到CPU Cache中。<br>​    4)将数据刷新到主内存中。</p>
+<p>​    i++在单线程的情况下不会出现任何问题，但是在多线程的情况下就会有问题。如果同时有两个线程执行i++操作,假设i的初始值为0,每一个线程都从主内存中获取i的值存人CPU Cache中，然后经过计算再写人主内存中，很有可能i在经过了两次自增之后结果还是1,这就是典型的缓存不-致性问题。</p>
+<p>为了解决缓存不一致性问题，通常主流的解决方法有如下两种。</p>
+<ul>
+<li><p>通过总线加锁的方式。</p>
+<p>通过控制总线进行，会阻塞其他cpu对其他组件的访问。</p>
+</li>
+<li><p>通过缓存一致性协议。</p>
+<img src="/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/%E7%BC%93%E5%AD%98%E4%B8%80%E8%87%B4%E5%8D%8F%E8%AE%AE.png" class="">
+
+<p>当CPU在操作Cache中的数据时，如果发现该变量是-一个共享变量，也就是说在其他的CPU Cache中也存在一-个副本,那么进行如下操作:</p>
+<p>​    1)读取操作，不做任何处理，只是将Cache中的数据读取到寄存器。<br>​    2)写入操作，发出信号通知其他CPU将该变量的Cacheline置为无效状态，其他CPU在进行该变量读取的时候不得不到主内存中再次获取。</p>
+</li>
+</ul>
+<h2 id="2-java内存模型"><a href="#2-java内存模型" class="headerlink" title="2. java内存模型"></a>2. java内存模型</h2><p>​        Java的内存模型( Java Memory Mode, JMM)指定了Java 虚拟机如何与计算机的主存( RAM)进行工作，如图所示:</p>
+<img src="/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/java%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B.png" class="">
+
+<p>​    Java的内存模型决定了一个线程对共享变量的写人何时对其他线程可见，Java内存模型定义了线程和主内存之间的抽象关系，具体如下。</p>
+<ul>
+<li><p>共享变量存储于主内存之中，每个线程都可以访问。</p>
+</li>
+<li><p>每个线程都有私有的工作内存或者称为本地内存。</p>
+</li>
+<li><p>工作内存只存储该线程对共享变量的副本。</p>
+</li>
+<li><p>线程不能直接操作主内存，只有先操作了工作内存之后才能写人主内存。</p>
+</li>
+<li><p>工作内存和Java内存模型一样也是-一个抽象的概念，它其实并不存在，它涵盖了缓存、寄存器、编译器优化以及硬件等。</p>
+</li>
+</ul>
+<p><strong>假设主内存的共享变量为0,线程1和线程2分别拥有共享变量X的副本，假设线程1此时将工作内存中的x修改为1,同时刷新到主内存中，当线程2想要去使用副本x的时候，就会发现该变量已经失效了，必须到主内存中再次获取然后存人自己的工作内容中，这一点和CPU与CPUCache之间的关系非常类似。</strong></p>
+<img src="/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/%E4%BA%A4%E4%BA%92.png" class="">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://blog.bubbletg.cn/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/" title="机器硬件CPU与java内存模型" target="_blank" rel="external">https://blog.bubbletg.cn/2019/09/01/%E6%9C%BA%E5%99%A8%E7%A1%AC%E4%BB%B6CPU%E4%B8%8Ejava%E5%86%85%E5%AD%98%E6%A8%A1%E5%9E%8B/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/bubbletg" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/bubbletg" target="_blank"><span class="text-dark">BubbleTg</span><small class="ml-1x">JAVA Developer &amp; Student</small></a></h3>
+        <div>一个菜菜的程序员。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2019/09/02/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3volatile%E5%85%B3%E9%94%AE%E5%AD%97/" title="深入理解volatile关键字"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2019/02/05/%E5%B8%B8%E8%A7%81%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95%E4%B9%8B%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F/" title="常见排序算法之归并排序"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/bubbletg" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/bubbletg" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/bubbletg" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

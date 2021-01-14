@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>你真的理解事件冒泡和事件捕获吗？ | BubbleTg</title>
+  <meta name="description" content="转载：原文地址：https:&#x2F;&#x2F;juejin.cn&#x2F;post&#x2F;6844903834075021326 1. 事件冒泡与事件捕获事件冒泡和事件捕获分别由微软和网景公司提出，这两个概念都是为了解决页面中事件流（事件发生顺序）的问题。 123&lt;div id&#x3D;&quot;outer&quot;&gt;    &lt;p id&#x3D;&quot;inner&quot;&gt;Click me!&lt;&#x2F;p&amp;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="你真的理解事件冒泡和事件捕获吗？">
+<meta property="og:url" content="https://blog.bubbletg.cn/2020/09/24/%E4%BD%A0%E7%9C%9F%E7%9A%84%E7%90%86%E8%A7%A3%20%E4%BA%8B%E4%BB%B6%E5%86%92%E6%B3%A1%20%E5%92%8C%20%E4%BA%8B%E4%BB%B6%E6%8D%95%E8%8E%B7%20%E5%90%97%EF%BC%9F/index.html">
+<meta property="og:site_name" content="BubbleTg">
+<meta property="og:description" content="转载：原文地址：https:&#x2F;&#x2F;juejin.cn&#x2F;post&#x2F;6844903834075021326 1. 事件冒泡与事件捕获事件冒泡和事件捕获分别由微软和网景公司提出，这两个概念都是为了解决页面中事件流（事件发生顺序）的问题。 123&lt;div id&#x3D;&quot;outer&quot;&gt;    &lt;p id&#x3D;&quot;inner&quot;&gt;Click me!&lt;&#x2F;p&amp;">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tcs.teambition.net/storage/312114252dc543ca57db446563968acf2aae?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IjVmNjQ0ODI2YjAzMzYxYmNiNWM3ZDI4YyIsImV4cCI6MTYxMDk1MzU3NiwiaWF0IjoxNjEwMzQ4Nzc2LCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjExNDI1MmRjNTQzY2E1N2RiNDQ2NTYzOTY4YWNmMmFhZSJ9.W14KynWC3pH3zwM5UNC3silKGD4JJV6lExuXwTQg8Z4&download=image.png">
+<meta property="og:image" content="https://tcs.teambition.net/storage/3121ddc9082bdae66b5969b9d63be47e9e4d?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IjVmNjQ0ODI2YjAzMzYxYmNiNWM3ZDI4YyIsImV4cCI6MTYxMDk1NDI1NiwiaWF0IjoxNjEwMzQ5NDU2LCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjFkZGM5MDgyYmRhZTY2YjU5NjliOWQ2M2JlNDdlOWU0ZCJ9.3WIqn644aXGqZ4-9URk2dKCehYPkUmYXpdNIz1DY7Jc&download=image.png">
+<meta property="article:published_time" content="2020-09-24T13:22:53.000Z">
+<meta property="article:modified_time" content="2021-01-14T01:31:45.104Z">
+<meta property="article:author" content="BubbleTg">
+<meta property="article:tag" content="js事件">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tcs.teambition.net/storage/312114252dc543ca57db446563968acf2aae?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IjVmNjQ0ODI2YjAzMzYxYmNiNWM3ZDI4YyIsImV4cCI6MTYxMDk1MzU3NiwiaWF0IjoxNjEwMzQ4Nzc2LCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjExNDI1MmRjNTQzY2E1N2RiNDQ2NTYzOTY4YWNmMmFhZSJ9.W14KynWC3pH3zwM5UNC3silKGD4JJV6lExuXwTQg8Z4&download=image.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://blog.bubbletg.cn/2020/09/24/%E4%BD%A0%E7%9C%9F%E7%9A%84%E7%90%86%E8%A7%A3%20%E4%BA%8B%E4%BB%B6%E5%86%92%E6%B3%A1%20%E5%92%8C%20%E4%BA%8B%E4%BB%B6%E6%8D%95%E8%8E%B7%20%E5%90%97%EF%BC%9F/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="BubbleTg" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.1.1"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/bubbletg" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">BubbleTg</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">JAVA Developer &amp; Student</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/bubbletg" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/bubbletg" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/bubbletg" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p> QQ：363491343<br>
+微信：tiangui_<br>
+我的个人网站：<a href="http://www.bubbletg.cn" target="view_window">www.bubbletg.cn</a><br>
+我的博客：<a href="http://blog.bubbletg.cn" target="view_window">blog.bubbletg.cn</a><br>
+我的GitHub：<a href="https://github.com/bubbletg" target="view_window">https://github.com/bubbletg</a><br> </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/CSS/">CSS</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/HTTP/">HTTP</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/JavaScript/">JavaScript</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Spring/">Spring</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">6</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95/">排序算法</a><span class="category-list-count">6</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%8D%E5%8A%A1%E4%B8%8E%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85/">服务与软件安装</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%8D%E5%8A%A1%E5%99%A8/">服务器</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%B5%8F%E8%A7%88%E5%99%A8/">浏览器</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E7%BB%83%E4%B9%A0/">编程练习</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/">软件测试</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%9D%A2%E8%AF%95%E9%A2%98/">面试题</a><span class="category-list-count">3</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CSS/" rel="tag">CSS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CSS%E5%8A%A8%E7%94%BB/" rel="tag">CSS动画</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux-%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="tag">Linux 服务器</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RabbitMQ/" rel="tag">RabbitMQ</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Spring/" rel="tag">Spring</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/http%E5%8D%8F%E8%AE%AE/" rel="tag">http协议</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">15</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/js%E4%BA%8B%E4%BB%B6/" rel="tag">js事件</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/js%E5%9F%BA%E7%A1%80/" rel="tag">js基础</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%B7%E9%A2%98/" rel="tag">刷题</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="tag">服务器</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B5%8F%E8%A7%88%E5%99%A8%E7%BC%93%E5%AD%98/" rel="tag">浏览器缓存</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a><span class="tag-list-count">11</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" rel="tag">计算机网络</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%B7%A8%E5%9F%9F/" rel="tag">跨域</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/" rel="tag">软件测试</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9D%A2%E8%AF%95/" rel="tag">面试</a><span class="tag-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/CSS/" style="font-size: 13px;">CSS</a> <a href="/tags/CSS%E5%8A%A8%E7%94%BB/" style="font-size: 13px;">CSS动画</a> <a href="/tags/JVM/" style="font-size: 13px;">JVM</a> <a href="/tags/Linux-%E6%9C%8D%E5%8A%A1%E5%99%A8/" style="font-size: 13px;">Linux 服务器</a> <a href="/tags/RabbitMQ/" style="font-size: 13px;">RabbitMQ</a> <a href="/tags/Spring/" style="font-size: 13.25px;">Spring</a> <a href="/tags/http%E5%8D%8F%E8%AE%AE/" style="font-size: 13px;">http协议</a> <a href="/tags/java/" style="font-size: 14px;">java</a> <a href="/tags/js%E4%BA%8B%E4%BB%B6/" style="font-size: 13px;">js事件</a> <a href="/tags/js%E5%9F%BA%E7%A1%80/" style="font-size: 13.25px;">js基础</a> <a href="/tags/%E5%88%B7%E9%A2%98/" style="font-size: 13px;">刷题</a> <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" style="font-size: 13.5px;">多线程</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 13px;">数据库</a> <a href="/tags/%E6%9C%8D%E5%8A%A1%E5%99%A8/" style="font-size: 13px;">服务器</a> <a href="/tags/%E6%B5%8F%E8%A7%88%E5%99%A8%E7%BC%93%E5%AD%98/" style="font-size: 13px;">浏览器缓存</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 13.75px;">算法</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" style="font-size: 13.5px;">计算机网络</a> <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" style="font-size: 13.25px;">设计模式</a> <a href="/tags/%E8%B7%A8%E5%9F%9F/" style="font-size: 13px;">跨域</a> <a href="/tags/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/" style="font-size: 13.25px;">软件测试</a> <a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 13.25px;">面试</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/12/">十二月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/10/">十月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/09/">九月 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">十一月 2019</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/02/">二月 2019</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/01/">一月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">四月 2018</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">一月 2017</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%B5%8F%E8%A7%88%E5%99%A8/">浏览器</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/12/24/%E8%A7%A3%E5%86%B3%E8%B7%A8%E5%9F%9F%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/" class="title">解决跨域问题的几种方案</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-12-24T10:01:53.000Z" itemprop="datePublished">2020-12-24</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/HTTP/">HTTP</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/10/10/http%E5%8D%8F%E8%AE%AE%E4%B8%8E%E7%BC%93%E5%AD%98/" class="title">http协议与缓存</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-10-10T15:23:53.000Z" itemprop="datePublished">2020-10-10</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/JavaScript/">JavaScript</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/09/24/%E4%BD%A0%E7%9C%9F%E7%9A%84%E7%90%86%E8%A7%A3%20%E4%BA%8B%E4%BB%B6%E5%86%92%E6%B3%A1%20%E5%92%8C%20%E4%BA%8B%E4%BB%B6%E6%8D%95%E8%8E%B7%20%E5%90%97%EF%BC%9F/" class="title">你真的理解事件冒泡和事件捕获吗？</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-09-24T13:22:53.000Z" itemprop="datePublished">2020-09-24</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/JavaScript/">JavaScript</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/09/22/%E6%89%8B%E5%86%99%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B7%B1%E5%BA%A6%E6%AF%94%E8%BE%83/" class="title">手写深拷贝与深度比较</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-09-22T15:01:53.000Z" itemprop="datePublished">2020-09-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/JavaScript/">JavaScript</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/09/21/%E6%89%8B%E5%86%99%EF%BC%9Anew,call,apply/" class="title">手写：new,call,apply</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-09-21T12:01:53.000Z" itemprop="datePublished">2020-09-21</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-你真的理解 事件冒泡 和 事件捕获 吗？" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      你真的理解事件冒泡和事件捕获吗？
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2020/09/24/%E4%BD%A0%E7%9C%9F%E7%9A%84%E7%90%86%E8%A7%A3%20%E4%BA%8B%E4%BB%B6%E5%86%92%E6%B3%A1%20%E5%92%8C%20%E4%BA%8B%E4%BB%B6%E6%8D%95%E8%8E%B7%20%E5%90%97%EF%BC%9F/" class="article-date">
+	  <time datetime="2020-09-24T13:22:53.000Z" itemprop="datePublished">2020-09-24</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/JavaScript/">JavaScript</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/js%E4%BA%8B%E4%BB%B6/" rel="tag">js事件</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2020/09/24/%E4%BD%A0%E7%9C%9F%E7%9A%84%E7%90%86%E8%A7%A3%20%E4%BA%8B%E4%BB%B6%E5%86%92%E6%B3%A1%20%E5%92%8C%20%E4%BA%8B%E4%BB%B6%E6%8D%95%E8%8E%B7%20%E5%90%97%EF%BC%9F/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p>转载：<br>原文地址：<a target="_blank" rel="noopener" href="https://juejin.cn/post/6844903834075021326"><strong>https://juejin.cn/post/6844903834075021326</strong></a></p>
+<h1 id="1-事件冒泡与事件捕获"><a href="#1-事件冒泡与事件捕获" class="headerlink" title="1. 事件冒泡与事件捕获"></a>1. 事件冒泡与事件捕获</h1><p>事件冒泡和事件捕获分别由微软和网景公司提出，这两个概念都是为了解决页面中<strong>事件流</strong>（事件发生顺序）的问题。</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">id</span>=<span class="string">&quot;outer&quot;</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">p</span> <span class="attr">id</span>=<span class="string">&quot;inner&quot;</span>&gt;</span>Click me!<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>上面的代码当中一个div元素当中有一个p子元素，如果两个元素都有一个click的处理函数，那么我们怎么才能知道哪一个函数会首先被触发呢？</p>
+<p>为了解决这个问题微软和网景提出了两种几乎完全相反的概念。</p>
+<h3 id="事件冒泡"><a href="#事件冒泡" class="headerlink" title="事件冒泡"></a>事件冒泡</h3><p>微软提出了名为<strong>事件冒泡</strong>(event bubbling)的事件流。事件冒泡可以形象地比喻为把一颗石头投入水中，泡泡会一直从水底冒出水面。也就是说，事件会从最内层的元素开始发生，一直向上传播，直到document对象。</p>
+<p>因此上面的例子在事件冒泡的概念下发生click事件的顺序应该是</p>
+<p><strong>p -&gt; div -&gt; body -&gt; html -&gt; document</strong></p>
+<h3 id="事件捕获"><a href="#事件捕获" class="headerlink" title="事件捕获"></a>事件捕获</h3><p>网景提出另一种事件流名为<strong>事件捕获</strong>(event capturing)。与事件冒泡相反，事件会从最外层开始发生，直到最具体的元素。</p>
+<p>上面的例子在事件捕获的概念下发生click事件的顺序应该是</p>
+<p><strong>document -&gt; html -&gt; body -&gt; div -&gt; p</strong></p>
+<p><img src="https://tcs.teambition.net/storage/312114252dc543ca57db446563968acf2aae?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IjVmNjQ0ODI2YjAzMzYxYmNiNWM3ZDI4YyIsImV4cCI6MTYxMDk1MzU3NiwiaWF0IjoxNjEwMzQ4Nzc2LCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjExNDI1MmRjNTQzY2E1N2RiNDQ2NTYzOTY4YWNmMmFhZSJ9.W14KynWC3pH3zwM5UNC3silKGD4JJV6lExuXwTQg8Z4&download=image.png" alt=""></p>
+<h2 id="2-addEventListener-的第三个参数"><a href="#2-addEventListener-的第三个参数" class="headerlink" title="2. addEventListener 的第三个参数"></a>2. addEventListener 的第三个参数</h2><p>DOM2级事件”中规定的事件流同时支持了事件捕获阶段和事件冒泡阶段，而作为开发者，我们可以选择事件处理函数在哪一个阶段被调用。</p>
+<p>addEventListener方法用来为一个特定的元素绑定一个事件处理函数，是JavaScript中的常用方法。addEventListener有三个参数：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">element.addEventListener(event, <span class="function"><span class="keyword">function</span>, <span class="title">useCapture</span>)</span></span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>event</td>
+<td>必须。字符串，指定事件名。注意:不要使用 “on” 前缀。 例如，使用 “click” ,而不是使用 “onclick”。提示：所有 HTML DOM 事件，可以查看我们完整的 HTML DOM Event 对象参考手册。</td>
+</tr>
+<tr>
+<td>function</td>
+<td>必须。指定要事件触发时执行的函数。当事件对象会作为第一个参数传入函数。 事件对象的类型取决于特定的事件。例如， “click” 事件属于 MouseEvent(鼠标事件) 对象。</td>
+</tr>
+<tr>
+<td>useCapture</td>
+<td>可选。布尔值，指定事件是否在捕获或冒泡阶段执行。可能值:</td>
+</tr>
+</tbody></table>
+<h1 id="3-事件代理"><a href="#3-事件代理" class="headerlink" title="3. 事件代理"></a>3. 事件代理</h1><p>在实际的开发当中，利用事件流的特性，我们可以使用一种叫做事件代理的方法。</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">ul</span> <span class="attr">class</span>=<span class="string">&quot;color_list&quot;</span>&gt;</span>        </span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>red<span class="tag">&lt;/<span class="name">li</span>&gt;</span>        </span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>orange<span class="tag">&lt;/<span class="name">li</span>&gt;</span>        </span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>yellow<span class="tag">&lt;/<span class="name">li</span>&gt;</span>        </span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>green<span class="tag">&lt;/<span class="name">li</span>&gt;</span>        </span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>blue<span class="tag">&lt;/<span class="name">li</span>&gt;</span>        </span><br><span class="line">    <span class="tag">&lt;<span class="name">li</span>&gt;</span>purple<span class="tag">&lt;/<span class="name">li</span>&gt;</span>    </span><br><span class="line"><span class="tag">&lt;/<span class="name">ul</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;box&quot;</span>&gt;</span><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight css"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="selector-class">.color_list</span>&#123;            </span><br><span class="line">    <span class="attribute">display</span>: flex;            </span><br><span class="line">    <span class="attribute">display</span>: -webkit-flex;        </span><br><span class="line">&#125;        </span><br><span class="line"><span class="selector-class">.color_list</span> <span class="selector-tag">li</span>&#123;            </span><br><span class="line">    <span class="attribute">width</span>: <span class="number">100px</span>;            </span><br><span class="line">    <span class="attribute">height</span>: <span class="number">100px</span>;            </span><br><span class="line">    <span class="attribute">list-style</span>: none;            </span><br><span class="line">    <span class="attribute">text-align</span>: center;            </span><br><span class="line">    <span class="attribute">line-height</span>: <span class="number">100px</span>;        </span><br><span class="line">&#125;</span><br><span class="line">//每个li加上对应的颜色，此处省略</span><br><span class="line"><span class="selector-class">.box</span>&#123;            </span><br><span class="line">    <span class="attribute">width</span>: <span class="number">600px</span>;            </span><br><span class="line">    <span class="attribute">height</span>: <span class="number">150px</span>;            </span><br><span class="line">    <span class="attribute">background-color</span>: <span class="number">#cccccc</span>;            </span><br><span class="line">    <span class="attribute">line-height</span>: <span class="number">150px</span>;            </span><br><span class="line">    <span class="attribute">text-align</span>: center;        </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><img src="https://tcs.teambition.net/storage/3121ddc9082bdae66b5969b9d63be47e9e4d?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IjVmNjQ0ODI2YjAzMzYxYmNiNWM3ZDI4YyIsImV4cCI6MTYxMDk1NDI1NiwiaWF0IjoxNjEwMzQ5NDU2LCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjFkZGM5MDgyYmRhZTY2YjU5NjliOWQ2M2JlNDdlOWU0ZCJ9.3WIqn644aXGqZ4-9URk2dKCehYPkUmYXpdNIz1DY7Jc&download=image.png" alt=""></p>
+<p>我们想要在点击每个 li 标签时，输出li当中的颜色<code>（innerHTML）</code> 。常规做法是遍历每个 li ,然后在每个 li 上绑定一个点击事件：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> color_list=<span class="built_in">document</span>.querySelector(<span class="string">&quot;.color_list&quot;</span>);            </span><br><span class="line"><span class="keyword">var</span> colors=color_list.getElementsByTagName(<span class="string">&quot;li&quot;</span>);            </span><br><span class="line"><span class="keyword">var</span> box=<span class="built_in">document</span>.querySelector(<span class="string">&quot;.box&quot;</span>);            </span><br><span class="line"><span class="keyword">for</span>(<span class="keyword">var</span> n=<span class="number">0</span>;n&lt;colors.length;n++)&#123;                </span><br><span class="line">    colors[n].addEventListener(<span class="string">&quot;click&quot;</span>,<span class="function"><span class="keyword">function</span>(<span class="params"></span>)</span>&#123;                    </span><br><span class="line">        <span class="built_in">console</span>.log(<span class="built_in">this</span>.innerHTML)                    </span><br><span class="line">        box.innerHTML=<span class="string">&quot;该颜色为 &quot;</span>+<span class="built_in">this</span>.innerHTML;                </span><br><span class="line">    &#125;)            </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这种做法在 li 较少的时候可以使用，但如果有一万个 li ，那就会导致性能降低（少了遍历所有 li 节点的操作，性能上肯定更加优化）。</p>
+<p>这时就需要事件代理出场了，利用事件流的特性，我们只绑定一个事件处理函数也可以完成：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">colorChange</span>(<span class="params">e</span>)</span>&#123;                </span><br><span class="line">    <span class="keyword">var</span> e=e||<span class="built_in">window</span>.event;<span class="comment">//兼容性的处理         </span></span><br><span class="line">    <span class="keyword">if</span>(e.target.nodeName.toLowerCase()===<span class="string">&quot;li&quot;</span>)&#123;                    </span><br><span class="line">        box.innerHTML=<span class="string">&quot;该颜色为 &quot;</span>+e.target.innerHTML;                </span><br><span class="line">    &#125;                            </span><br><span class="line">&#125;            </span><br><span class="line">color_list.addEventListener(<span class="string">&quot;click&quot;</span>,colorChange,<span class="literal">false</span>)</span><br></pre></td></tr></table></figure>
+
+<p>由于事件冒泡机制，点击了 li 后会冒泡到 ul ，此时就会触发绑定在 ul 上的点击事件，再利用 target 找到事件实际发生的元素，就可以达到预期的效果。</p>
+<p><strong>使用事件代理的好处不仅在于将多个事件处理函数减为一个，而且对于不同的元素可以有不同的处理方法。假如上述列表元素当中添加了其他的元素节点（如：a、span等），我们不必再一次循环给每一个元素绑定事件，直接修改事件代理的事件处理函数即可。</strong></p>
+<p><strong>（1）toLowerCase() **方法用于把字符串转换为小写。</strong>语法：**stringObject.toLowerCase()</p>
+<p><strong>返回值：</strong>一个新的字符串，在其中 stringObject 的所有大写字符全部被转换为了小写字符。</p>
+<p>*<em>（2）nodeName *</em>属性指定节点的节点名称。如果节点是元素节点，则 nodeName 属性返回标签名。如果节点是属性节点，则 nodeName 属性返回属性的名称。对于其他节点类型，nodeName 属性返回不同节点类型的不同名称。</p>
+<p><strong>所有主流浏览器均支持 nodeName 属性。</strong></p>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://blog.bubbletg.cn/2020/09/24/%E4%BD%A0%E7%9C%9F%E7%9A%84%E7%90%86%E8%A7%A3%20%E4%BA%8B%E4%BB%B6%E5%86%92%E6%B3%A1%20%E5%92%8C%20%E4%BA%8B%E4%BB%B6%E6%8D%95%E8%8E%B7%20%E5%90%97%EF%BC%9F/" title="你真的理解事件冒泡和事件捕获吗？" target="_blank" rel="external">https://blog.bubbletg.cn/2020/09/24/%E4%BD%A0%E7%9C%9F%E7%9A%84%E7%90%86%E8%A7%A3%20%E4%BA%8B%E4%BB%B6%E5%86%92%E6%B3%A1%20%E5%92%8C%20%E4%BA%8B%E4%BB%B6%E6%8D%95%E8%8E%B7%20%E5%90%97%EF%BC%9F/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/bubbletg" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/bubbletg" target="_blank"><span class="text-dark">BubbleTg</span><small class="ml-1x">JAVA Developer &amp; Student</small></a></h3>
+        <div>一个菜菜的程序员。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2020/10/10/http%E5%8D%8F%E8%AE%AE%E4%B8%8E%E7%BC%93%E5%AD%98/" title="http协议与缓存"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2020/09/22/%E6%89%8B%E5%86%99%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B7%B1%E5%BA%A6%E6%AF%94%E8%BE%83/" title="手写深拷贝与深度比较"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/bubbletg" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/bubbletg" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/bubbletg" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>

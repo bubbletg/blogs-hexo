@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>http协议与缓存 | BubbleTg</title>
+  <meta name="description" content="本文为学习笔记，并非原创 1.状态码状态码的分类1xx 服务器收到请求  2xx 请求成功  3xx 重定向  4xx 客户端错误  5xx 服务端错误常见状态码200 成功  301 永久重定向（配合location 浏览器自动处理）  302 临时重定向 （配合location 浏览器自动处理）  304 资源未被修改  404 资源未找到  403 没有权限  500 服务器错误  504">
+<meta property="og:type" content="article">
+<meta property="og:title" content="http协议与缓存">
+<meta property="og:url" content="https://blog.bubbletg.cn/2020/10/10/http%E5%8D%8F%E8%AE%AE%E4%B8%8E%E7%BC%93%E5%AD%98/index.html">
+<meta property="og:site_name" content="BubbleTg">
+<meta property="og:description" content="本文为学习笔记，并非原创 1.状态码状态码的分类1xx 服务器收到请求  2xx 请求成功  3xx 重定向  4xx 客户端错误  5xx 服务端错误常见状态码200 成功  301 永久重定向（配合location 浏览器自动处理）  302 临时重定向 （配合location 浏览器自动处理）  304 资源未被修改  404 资源未找到  403 没有权限  500 服务器错误  504">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://tcs.teambition.net/storage/3120e1e0f1ab8762df4ae072719642fac488?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjBlMWUwZjFhYjg3NjJkZjRhZTA3MjcxOTY0MmZhYzQ4OCJ9.Jl0rjkQrkNOWqbZoL26354dDrmY65PBCOYhrupN9LEk&download=image.png">
+<meta property="og:image" content="https://tcs.teambition.net/storage/3120a5547c99fdc37f858d5d9b07f0974fdb?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjBhNTU0N2M5OWZkYzM3Zjg1OGQ1ZDliMDdmMDk3NGZkYiJ9.CSBnj19fKjDJX4qbD6auxAXYAWpQlQHZn9czkOxv7F4&download=image.png">
+<meta property="og:image" content="https://tcs.teambition.net/storage/31203e75396b0d60ffa667e20890fed877ce?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjAzZTc1Mzk2YjBkNjBmZmE2NjdlMjA4OTBmZWQ4NzdjZSJ9.FzvDggP3XoR2QapQacfqoRp0LpN80uNBCMJFz-VYGDc&download=image.png">
+<meta property="og:image" content="https://tcs.teambition.net/storage/3120afd766b7006165ec3bd7e9cdb99f6c42?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjBhZmQ3NjZiNzAwNjE2NWVjM2JkN2U5Y2RiOTlmNmM0MiJ9.TX0E0eZ2eYrmRntcE7fr0esyFVt1Gxd-ZmaMHn5TCGA&download=image.png">
+<meta property="og:image" content="https://tcs.teambition.net/storage/3120c6b403f1f38cc2bf06a811e697c9e8b9?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjBjNmI0MDNmMWYzOGNjMmJmMDZhODExZTY5N2M5ZThiOSJ9.JNKKLVk7TvAlymzKqfywp7hsn6_61ls6WnyTa4aXaxo&download=image.png">
+<meta property="og:image" content="https://tcs.teambition.net/storage/3120b4bfc5d9742474601c7d9bd471b5b6ef?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjBiNGJmYzVkOTc0MjQ3NDYwMWM3ZDliZDQ3MWI1YjZlZiJ9.z9PsdI3gy79HzaO5DtdyweKy0iDlv6VQm2Cn8x0QXnQ&download=image.png">
+<meta property="og:image" content="https://tcs.teambition.net/storage/31205eebb735aba70c0e17f759a315ce8303?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjA1ZWViYjczNWFiYTcwYzBlMTdmNzU5YTMxNWNlODMwMyJ9.C5EFKzs3bVvvhDFc73o2RjDjXOyCVVbT6iZFwllbok0&download=image.png">
+<meta property="og:image" content="https://tcs.teambition.net/storage/31200a84cc1af855f29f88d284eb54bc927d?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjAwYTg0Y2MxYWY4NTVmMjlmODhkMjg0ZWI1NGJjOTI3ZCJ9.3s70lAqzjqY0yY2BEYnUkZ7GdPTmnIOaUVBqYvoEBKE&download=image.png">
+<meta property="article:published_time" content="2020-10-10T15:23:53.000Z">
+<meta property="article:modified_time" content="2021-01-14T01:38:08.941Z">
+<meta property="article:author" content="BubbleTg">
+<meta property="article:tag" content="http协议">
+<meta property="article:tag" content="浏览器缓存">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://tcs.teambition.net/storage/3120e1e0f1ab8762df4ae072719642fac488?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjBlMWUwZjFhYjg3NjJkZjRhZTA3MjcxOTY0MmZhYzQ4OCJ9.Jl0rjkQrkNOWqbZoL26354dDrmY65PBCOYhrupN9LEk&download=image.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://blog.bubbletg.cn/2020/10/10/http%E5%8D%8F%E8%AE%AE%E4%B8%8E%E7%BC%93%E5%AD%98/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="BubbleTg" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  
+<link rel="stylesheet" href="/css/style.css">
+
+  
+  
+  
+  
+<meta name="generator" content="Hexo 5.1.1"></head>
+
+
+<body class="main-center" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/bubbletg" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.jpg" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">BubbleTg</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">JAVA Developer &amp; Student</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav ">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-books">
+          <a href="/books">
+            
+            <i class="icon icon-book-fill"></i>
+            
+            <span class="menu-title">书单</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/bubbletg" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/bubbletg" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/bubbletg" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p> QQ：363491343<br>
+微信：tiangui_<br>
+我的个人网站：<a href="http://www.bubbletg.cn" target="view_window">www.bubbletg.cn</a><br>
+我的博客：<a href="http://blog.bubbletg.cn" target="view_window">blog.bubbletg.cn</a><br>
+我的GitHub：<a href="https://github.com/bubbletg" target="view_window">https://github.com/bubbletg</a><br> </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/CSS/">CSS</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/HTTP/">HTTP</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/JavaScript/">JavaScript</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/Spring/">Spring</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/java/">java</a><span class="category-list-count">6</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%8E%92%E5%BA%8F%E7%AE%97%E6%B3%95/">排序算法</a><span class="category-list-count">6</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/">数据库</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%8D%E5%8A%A1%E4%B8%8E%E8%BD%AF%E4%BB%B6%E5%AE%89%E8%A3%85/">服务与软件安装</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%9C%8D%E5%8A%A1%E5%99%A8/">服务器</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E6%B5%8F%E8%A7%88%E5%99%A8/">浏览器</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B%E7%BB%83%E4%B9%A0/">编程练习</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/">计算机网络</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/">设计模式</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/">软件测试</a><span class="category-list-count">2</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%9D%A2%E8%AF%95%E9%A2%98/">面试题</a><span class="category-list-count">3</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CSS/" rel="tag">CSS</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/CSS%E5%8A%A8%E7%94%BB/" rel="tag">CSS动画</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/JVM/" rel="tag">JVM</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Linux-%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="tag">Linux 服务器</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/RabbitMQ/" rel="tag">RabbitMQ</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Spring/" rel="tag">Spring</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/http%E5%8D%8F%E8%AE%AE/" rel="tag">http协议</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/java/" rel="tag">java</a><span class="tag-list-count">15</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/js%E4%BA%8B%E4%BB%B6/" rel="tag">js事件</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/js%E5%9F%BA%E7%A1%80/" rel="tag">js基础</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%88%B7%E9%A2%98/" rel="tag">刷题</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" rel="tag">多线程</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag">数据库</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="tag">服务器</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B5%8F%E8%A7%88%E5%99%A8%E7%BC%93%E5%AD%98/" rel="tag">浏览器缓存</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E7%AE%97%E6%B3%95/" rel="tag">算法</a><span class="tag-list-count">11</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" rel="tag">计算机网络</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag">设计模式</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%B7%A8%E5%9F%9F/" rel="tag">跨域</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/" rel="tag">软件测试</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9D%A2%E8%AF%95/" rel="tag">面试</a><span class="tag-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/CSS/" style="font-size: 13px;">CSS</a> <a href="/tags/CSS%E5%8A%A8%E7%94%BB/" style="font-size: 13px;">CSS动画</a> <a href="/tags/JVM/" style="font-size: 13px;">JVM</a> <a href="/tags/Linux-%E6%9C%8D%E5%8A%A1%E5%99%A8/" style="font-size: 13px;">Linux 服务器</a> <a href="/tags/RabbitMQ/" style="font-size: 13px;">RabbitMQ</a> <a href="/tags/Spring/" style="font-size: 13.25px;">Spring</a> <a href="/tags/http%E5%8D%8F%E8%AE%AE/" style="font-size: 13px;">http协议</a> <a href="/tags/java/" style="font-size: 14px;">java</a> <a href="/tags/js%E4%BA%8B%E4%BB%B6/" style="font-size: 13px;">js事件</a> <a href="/tags/js%E5%9F%BA%E7%A1%80/" style="font-size: 13.25px;">js基础</a> <a href="/tags/%E5%88%B7%E9%A2%98/" style="font-size: 13px;">刷题</a> <a href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/" style="font-size: 13.5px;">多线程</a> <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 13px;">数据库</a> <a href="/tags/%E6%9C%8D%E5%8A%A1%E5%99%A8/" style="font-size: 13px;">服务器</a> <a href="/tags/%E6%B5%8F%E8%A7%88%E5%99%A8%E7%BC%93%E5%AD%98/" style="font-size: 13px;">浏览器缓存</a> <a href="/tags/%E7%AE%97%E6%B3%95/" style="font-size: 13.75px;">算法</a> <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" style="font-size: 13.5px;">计算机网络</a> <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" style="font-size: 13.25px;">设计模式</a> <a href="/tags/%E8%B7%A8%E5%9F%9F/" style="font-size: 13px;">跨域</a> <a href="/tags/%E8%BD%AF%E4%BB%B6%E6%B5%8B%E8%AF%95/" style="font-size: 13.25px;">软件测试</a> <a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 13.25px;">面试</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/12/">十二月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/10/">十月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/09/">九月 2020</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">十一月 2019</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">5</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/02/">二月 2019</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/01/">一月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/04/">四月 2018</a><span class="archive-list-count">4</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2017/01/">一月 2017</a><span class="archive-list-count">1</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E6%B5%8F%E8%A7%88%E5%99%A8/">浏览器</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/12/24/%E8%A7%A3%E5%86%B3%E8%B7%A8%E5%9F%9F%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/" class="title">解决跨域问题的几种方案</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-12-24T10:01:53.000Z" itemprop="datePublished">2020-12-24</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/HTTP/">HTTP</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/10/10/http%E5%8D%8F%E8%AE%AE%E4%B8%8E%E7%BC%93%E5%AD%98/" class="title">http协议与缓存</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-10-10T15:23:53.000Z" itemprop="datePublished">2020-10-10</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/JavaScript/">JavaScript</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/09/24/%E4%BD%A0%E7%9C%9F%E7%9A%84%E7%90%86%E8%A7%A3%20%E4%BA%8B%E4%BB%B6%E5%86%92%E6%B3%A1%20%E5%92%8C%20%E4%BA%8B%E4%BB%B6%E6%8D%95%E8%8E%B7%20%E5%90%97%EF%BC%9F/" class="title">你真的理解事件冒泡和事件捕获吗？</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-09-24T13:22:53.000Z" itemprop="datePublished">2020-09-24</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/JavaScript/">JavaScript</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/09/22/%E6%89%8B%E5%86%99%E6%B7%B1%E6%8B%B7%E8%B4%9D%E4%B8%8E%E6%B7%B1%E5%BA%A6%E6%AF%94%E8%BE%83/" class="title">手写深拷贝与深度比较</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-09-22T15:01:53.000Z" itemprop="datePublished">2020-09-22</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/JavaScript/">JavaScript</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/09/21/%E6%89%8B%E5%86%99%EF%BC%9Anew,call,apply/" class="title">手写：new,call,apply</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-09-21T12:01:53.000Z" itemprop="datePublished">2020-09-21</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-http协议与缓存" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      http协议与缓存
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2020/10/10/http%E5%8D%8F%E8%AE%AE%E4%B8%8E%E7%BC%93%E5%AD%98/" class="article-date">
+	  <time datetime="2020-10-10T15:23:53.000Z" itemprop="datePublished">2020-10-10</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/HTTP/">HTTP</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link-link" href="/tags/http%E5%8D%8F%E8%AE%AE/" rel="tag">http协议</a>, <a class="article-tag-link-link" href="/tags/%E6%B5%8F%E8%A7%88%E5%99%A8%E7%BC%93%E5%AD%98/" rel="tag">浏览器缓存</a>
+  </span>
+
+
+        
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2020/10/10/http%E5%8D%8F%E8%AE%AE%E4%B8%8E%E7%BC%93%E5%AD%98/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <p>本文为学习笔记，并非原创</p>
+<h1 id="1-状态码"><a href="#1-状态码" class="headerlink" title="1.状态码"></a>1.状态码</h1><h2 id="状态码的分类"><a href="#状态码的分类" class="headerlink" title="状态码的分类"></a>状态码的分类</h2><pre><code>1xx 服务器收到请求
+
+2xx 请求成功
+
+3xx 重定向
+
+4xx 客户端错误
+
+5xx 服务端错误</code></pre><h2 id="常见状态码"><a href="#常见状态码" class="headerlink" title="常见状态码"></a>常见状态码</h2><pre><code>200 成功
+
+301 永久重定向（配合location 浏览器自动处理）
+
+302 临时重定向 （配合location 浏览器自动处理）
+
+304 资源未被修改
+
+404 资源未找到
+
+403 没有权限
+
+500 服务器错误
+
+504 网关超时</code></pre><h2 id="关于协议和规范"><a href="#关于协议和规范" class="headerlink" title="关于协议和规范"></a>关于协议和规范</h2><h1 id="2-method"><a href="#2-method" class="headerlink" title="2.method"></a>2.method</h1><pre><code>传统的methods
+
+    get 获取服务器的数据
+
+    post 像服务器提交数据
+
+现在的methods
+
+    get获取数据
+
+    post新建数据
+
+    patch/put更新数据
+
+    delete删除数据</code></pre><h1 id="3-Restful-API"><a href="#3-Restful-API" class="headerlink" title="3.Restful API"></a>3.Restful API</h1><pre><code>◆一种新的API设计方法(早已推广使用)
+
+◆传统API设计:把每个url当做一个功能
+
+◆Restful API设计:把每个url当做一个唯一的资源
+
+    如何设计成一个资源？
+
+        尽量不用url
+
+            ◆传统API设计: /api/list?pageIndex=2
+
+            Restful API 设计 : /api/list/2
+
+        用method表示操作类型</code></pre><p><img src="https://tcs.teambition.net/storage/3120e1e0f1ab8762df4ae072719642fac488?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjBlMWUwZjFhYjg3NjJkZjRhZTA3MjcxOTY0MmZhYzQ4OCJ9.Jl0rjkQrkNOWqbZoL26354dDrmY65PBCOYhrupN9LEk&download=image.png" alt=""></p>
+<p><img src="https://tcs.teambition.net/storage/3120a5547c99fdc37f858d5d9b07f0974fdb?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjBhNTU0N2M5OWZkYzM3Zjg1OGQ1ZDliMDdmMDk3NGZkYiJ9.CSBnj19fKjDJX4qbD6auxAXYAWpQlQHZn9czkOxv7F4&download=image.png" alt=""></p>
+<h1 id="4-headers"><a href="#4-headers" class="headerlink" title="4.headers"></a>4.headers</h1><h2 id="常见的-Request-Headers"><a href="#常见的-Request-Headers" class="headerlink" title="常见的 Request Headers"></a>常见的 Request Headers</h2><pre><code>Accept 浏览器可接收的数据格式
+
+Accept-Encoding 浏览器可接收的压缩算法，如gzip
+
+Accept-Languange浏览器可接收的语言,如zh-CN
+
+Connection: keep-alive 一次TCP连接重复使用
+
+cookie
+
+User-Agent (简称UA )浏览器信息.
+
+Content-type发送数据的格式,如application/json .</code></pre><h2 id="常见的-Response-Headers"><a href="#常见的-Response-Headers" class="headerlink" title="常见的 Response Headers"></a>常见的 Response Headers</h2><pre><code>Content-type返回数据的格式,如application/json
+
+Content-length返回数据的大小,多少字节
+
+Content-Encoding返回数据的压缩算法,如gzip
+
+Set-Cookie</code></pre><h2 id="自定义Headers"><a href="#自定义Headers" class="headerlink" title="自定义Headers"></a>自定义Headers</h2><h2 id="缓存相关Headers"><a href="#缓存相关Headers" class="headerlink" title="缓存相关Headers"></a>缓存相关Headers</h2><p>Cache-Control  Expires</p>
+<pre><code>Last-Modified  If-Modified-Since
+
+Etag If- None-Match</code></pre><blockquote>
+<p>说一说常见的请求头和相应头都有什么呢？</p>
+</blockquote>
+<blockquote>
+<p>1)请求(客户端-&gt;服务端[request])</p>
+</blockquote>
+<blockquote>
+<pre><code>GET(请求的方式) /newcoder/hello.html(请求的目标资源) HTTP/1.1(请求采用的协议和版本号)</code></pre></blockquote>
+<blockquote>
+<pre><code>Accept: */*(客户端能接收的资源类型)</code></pre></blockquote>
+<blockquote>
+<pre><code>Accept-Language: en-us(客户端接收的语言类型)</code></pre></blockquote>
+<blockquote>
+<pre><code>Accept-Encoding: gzip, deflate(客户端能接收的压缩数据的类型)</code></pre></blockquote>
+<blockquote>
+<pre><code>Connection: Keep-Alive(维护客户端和服务端的连接关系)</code></pre></blockquote>
+<blockquote>
+<pre><code>Host: localhost:8080(连接的目标主机和端口号)</code></pre></blockquote>
+<blockquote>
+<pre><code>Referer: http://localhost/links.asp(告诉服务器我来自于哪里)</code></pre></blockquote>
+<blockquote>
+<pre><code>User-Agent: Mozilla/4.0(客户端版本号的名字)    </code></pre></blockquote>
+<blockquote>
+<pre><code>If-Modified-Since: Tue, 11 Jul 2000 18:23:51 GMT(缓存时间) </code></pre></blockquote>
+<blockquote>
+<pre><code>Cookie(客户端暂存服务端的信息)</code></pre></blockquote>
+<blockquote>
+<pre><code>Date: Tue, 11 Jul 2000 18:23:51 GMT(客户端请求服务端的时间)</code></pre></blockquote>
+<blockquote>
+<p>2)响应(服务端-&gt;客户端[response])</p>
+</blockquote>
+<blockquote>
+<pre><code>HTTP/1.1(响应采用的协议和版本号) 200(状态码) OK(描述信息)</code></pre></blockquote>
+<blockquote>
+<pre><code>Location: http://www.baidu.com(服务端需要客户端访问的页面路径) </code></pre></blockquote>
+<blockquote>
+<pre><code>Server:apache tomcat(服务端的Web服务端名)</code></pre></blockquote>
+<blockquote>
+<pre><code>Content-Encoding: gzip(服务端能够发送压缩编码类型) </code></pre></blockquote>
+<blockquote>
+<pre><code>Content-Length: 80(服务端发送的压缩数据的长度) </code></pre></blockquote>
+<blockquote>
+<pre><code>Content-Language: zh-cn(服务端发送的语言类型) </code></pre></blockquote>
+<blockquote>
+<pre><code>Content-Type: text/html; charset=GB2312(服务端发送的类型及采用的编码方式)</code></pre></blockquote>
+<blockquote>
+<pre><code>Last-Modified: Tue, 11 Jul 2000 18:23:51 GMT(服务端对该资源最后修改的时间)</code></pre></blockquote>
+<blockquote>
+<pre><code>Refresh: 1;url=http://www.it315.org(服务端要求客户端1秒钟后，刷新，然后访问指定的页面路径)</code></pre></blockquote>
+<blockquote>
+<pre><code>Content-Disposition: attachment; filename=aaa.zip(服务端要求客户端以下载文件的方式打开该文件)</code></pre></blockquote>
+<blockquote>
+<pre><code>Transfer-Encoding: chunked(分块传递数据到客户端）  </code></pre></blockquote>
+<blockquote>
+<pre><code>Set-Cookie:SS=Q0=5Lb_nQ; path=/search(服务端发送到客户端的暂存数据)</code></pre></blockquote>
+<blockquote>
+<pre><code>Expires: -1//3种(服务端禁止客户端缓存页面数据)</code></pre></blockquote>
+<blockquote>
+<pre><code>Cache-Control: no-***(服务端禁止客户端缓存页面数据)  </code></pre></blockquote>
+<blockquote>
+<pre><code>Pragma: no-***(服务端禁止客户端缓存页面数据)   </code></pre></blockquote>
+<blockquote>
+<pre><code>Connection: close(1.0)/(1.1)Keep-Alive(维护客户端和服务端的连接关系)  </code></pre></blockquote>
+<blockquote>
+<pre><code>Date: Tue, 11 Jul 2000 18:23:51 GMT(服务端响应客户端的时间)</code></pre></blockquote>
+<blockquote>
+<p><strong>在服务器响应客户端的时候，带上Access-Control-Allow-Origin头信息，解决跨域的一种方法。</strong></p>
+</blockquote>
+<h1 id="5-缓存策略"><a href="#5-缓存策略" class="headerlink" title="5.缓存策略"></a>5.缓存策略</h1><p>查看详情：</p>
+<h2 id="关于缓存"><a href="#关于缓存" class="headerlink" title="关于缓存"></a>关于缓存</h2><h3 id="为什么需要缓存？"><a href="#为什么需要缓存？" class="headerlink" title="为什么需要缓存？"></a>为什么需要缓存？</h3><p>网络请求慢且不稳定，导致页面的加载不稳定。</p>
+<p>可以被缓存的资源（js,css,img）</p>
+<h2 id="强制缓存"><a href="#强制缓存" class="headerlink" title="强制缓存"></a>强制缓存</h2><h3 id="Cache-Control"><a href="#Cache-Control" class="headerlink" title="Cache-Control"></a>Cache-Control</h3><ul>
+<li><p>存在Response Headers中 </p>
+</li>
+<li><p>控制强制缓存的逻辑</p>
+</li>
+<li><p>例如：Cache-Control:max-age = 31439000(单位是秒 )</p>
+</li>
+<li><p>当缓存失效时候，再次请求服务端</p>
+</li>
+<li><p>cache-control的值：</p>
+<ul>
+<li><p>max-age: 最大过期时间</p>
+</li>
+<li><p>no-cache: 不进行强制缓存，交给服务端处理</p>
+</li>
+<li><p>no-store：不进行强制缓存，不交给服务端处理</p>
+</li>
+<li><p>private: 只允许最终用户缓存，如手机用户</p>
+</li>
+<li><p>public:  运行中间一些路由，中间的代理做缓存 </p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="Expires（老的标准）"><a href="#Expires（老的标准）" class="headerlink" title="Expires（老的标准）"></a>Expires（老的标准）</h3><ul>
+<li><p>同样存在ResponseHeaders中</p>
+</li>
+<li><p>同为控制缓存过期时间 </p>
+</li>
+<li><p>已经被Cache-Control代替了</p>
+</li>
+</ul>
+<p><img src="https://tcs.teambition.net/storage/31203e75396b0d60ffa667e20890fed877ce?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjAzZTc1Mzk2YjBkNjBmZmE2NjdlMjA4OTBmZWQ4NzdjZSJ9.FzvDggP3XoR2QapQacfqoRp0LpN80uNBCMJFz-VYGDc&download=image.png" alt=""></p>
+<h2 id="协商缓存（对比缓存）"><a href="#协商缓存（对比缓存）" class="headerlink" title="协商缓存（对比缓存）"></a>协商缓存（对比缓存）</h2><ul>
+<li><p>服务端缓存策略-即服务端来判断是否进行缓存</p>
+</li>
+<li><p>服务端判断客户端资源，是否和服务端资源一样</p>
+</li>
+<li><p>一致则返回304，否则返回200和最新资源</p>
+</li>
+</ul>
+<p>浏览器如何判断客户端资源的？</p>
+<p><img src="https://tcs.teambition.net/storage/3120afd766b7006165ec3bd7e9cdb99f6c42?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjBhZmQ3NjZiNzAwNjE2NWVjM2JkN2U5Y2RiOTlmNmM0MiJ9.TX0E0eZ2eYrmRntcE7fr0esyFVt1Gxd-ZmaMHn5TCGA&download=image.png" alt=""></p>
+<h3 id="资源标识"><a href="#资源标识" class="headerlink" title="资源标识"></a>资源标识</h3><ul>
+<li><p>在Response Headers中，有两种：</p>
+<ul>
+<li>Last-Modified 资源的最后修改时间</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://tcs.teambition.net/storage/3120c6b403f1f38cc2bf06a811e697c9e8b9?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjBjNmI0MDNmMWYzOGNjMmJmMDZhODExZTY5N2M5ZThiOSJ9.JNKKLVk7TvAlymzKqfywp7hsn6_61ls6WnyTa4aXaxo&download=image.png" alt=""></p>
+<pre><code>- Etag 资源的唯一标识（一个字符串）</code></pre><p><img src="https://tcs.teambition.net/storage/3120b4bfc5d9742474601c7d9bd471b5b6ef?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjBiNGJmYzVkOTc0MjQ3NDYwMWM3ZDliZDQ3MWI1YjZlZiJ9.z9PsdI3gy79HzaO5DtdyweKy0iDlv6VQm2Cn8x0QXnQ&download=image.png" alt=""></p>
+<ul>
+<li><p>Last-Modified  和Etag的区别？</p>
+<ul>
+<li><p>两者共存会优先使用Etag</p>
+</li>
+<li><p>Last-Modified只能精确到秒级</p>
+</li>
+<li><p>如果资源被重复生成，而内容不变，则Etag更精确 </p>
+</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://tcs.teambition.net/storage/31205eebb735aba70c0e17f759a315ce8303?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjA1ZWViYjczNWFiYTcwYzBlMTdmNzU5YTMxNWNlODMwMyJ9.C5EFKzs3bVvvhDFc73o2RjDjXOyCVVbT6iZFwllbok0&download=image.png" alt=""></p>
+<p><img src="https://tcs.teambition.net/storage/31200a84cc1af855f29f88d284eb54bc927d?Signature=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBcHBJRCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9hcHBJZCI6IjU5Mzc3MGZmODM5NjMyMDAyZTAzNThmMSIsIl9vcmdhbml6YXRpb25JZCI6IiIsImV4cCI6MTYxMTE5Mjg5MSwiaWF0IjoxNjEwNTg4MDkxLCJyZXNvdXJjZSI6Ii9zdG9yYWdlLzMxMjAwYTg0Y2MxYWY4NTVmMjlmODhkMjg0ZWI1NGJjOTI3ZCJ9.3s70lAqzjqY0yY2BEYnUkZ7GdPTmnIOaUVBqYvoEBKE&download=image.png" alt=""></p>
+<h2 id="刷新操作，对缓存的影响"><a href="#刷新操作，对缓存的影响" class="headerlink" title="刷新操作，对缓存的影响"></a>刷新操作，对缓存的影响</h2><h3 id="三种刷新操作"><a href="#三种刷新操作" class="headerlink" title="三种刷新操作"></a>三种刷新操作</h3><p>正常操作：地址栏输入url,跳转链接，前进后退等</p>
+<p>手动刷新：F5,点击刷新按钮，点击右菜单刷新</p>
+<p>强制刷新：ctrl + F5</p>
+<h3 id="不同刷新操作-不同的缓存策略"><a href="#不同刷新操作-不同的缓存策略" class="headerlink" title="不同刷新操作,不同的缓存策略"></a>不同刷新操作,不同的缓存策略</h3><pre><code>◆正常操作:强制缓存有效,协商缓存有效
+
+◆手动刷新:强制缓存失效,协商缓存有效
+
+◆强制刷新:强制缓存失效,协商缓存失效</code></pre>
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://blog.bubbletg.cn/2020/10/10/http%E5%8D%8F%E8%AE%AE%E4%B8%8E%E7%BC%93%E5%AD%98/" title="http协议与缓存" target="_blank" rel="external">https://blog.bubbletg.cn/2020/10/10/http%E5%8D%8F%E8%AE%AE%E4%B8%8E%E7%BC%93%E5%AD%98/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/bubbletg" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.jpg" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/bubbletg" target="_blank"><span class="text-dark">BubbleTg</span><small class="ml-1x">JAVA Developer &amp; Student</small></a></h3>
+        <div>一个菜菜的程序员。</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+      <div id="vcomments"></div>
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2020/12/24/%E8%A7%A3%E5%86%B3%E8%B7%A8%E5%9F%9F%E6%96%B9%E5%BC%8F%E6%80%BB%E7%BB%93/" title="解决跨域问题的几种方案"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2020/09/24/%E4%BD%A0%E7%9C%9F%E7%9A%84%E7%90%86%E8%A7%A3%20%E4%BA%8B%E4%BB%B6%E5%86%92%E6%B3%A1%20%E5%92%8C%20%E4%BA%8B%E4%BB%B6%E6%8D%95%E8%8E%B7%20%E5%90%97%EF%BC%9F/" title="你真的理解事件冒泡和事件捕获吗？"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开支付宝扫一扫，即可进行扫码打赏哦</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">扫码打赏，你说多少就多少</p>
+              <p class="text-grey">打开微信扫一扫，即可进行扫码打赏哦</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/bubbletg" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="http://weibo.com/bubbletg" target="_blank" title="Weibo" data-toggle=tooltip data-placement=top><i class="icon icon-weibo"></i></a></li>
+        
+        <li><a href="https://twitter.com/iwebued" target="_blank" title="Twitter" data-toggle=tooltip data-placement=top><i class="icon icon-twitter"></i></a></li>
+        
+        <li><a href="https://www.behance.net/bubbletg" target="_blank" title="Behance" data-toggle=tooltip data-placement=top><i class="icon icon-behance"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Theme by <a href="https://github.com/cofess" target="_blank"> cofess </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+
+<script src="/js/plugin.min.js"></script>
+
+
+<script src="/js/application.js"></script>
+
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+
+<script src="/js/insight.js"></script>
+
+
+
+
+
+
+   
+
+
+
+
+   
+    
+  <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/valine"></script>
+  <script type="text/javascript">
+  var GUEST = ['nick', 'mail', 'link'];
+  var meta = 'nick,mail,link';
+  meta = meta.split(',').filter(function(item) {
+    return GUEST.indexOf(item) > -1;
+  });
+  new Valine({
+    el: '#vcomments',
+    verify: false,
+    notify: false,
+    appId: '',
+    appKey: '',
+    placeholder: 'Just go go',
+    avatar: 'mm',
+    meta: meta,
+    pageSize: '10' || 10,
+    visitor: false
+  });
+  </script>
+
+     
+
+
+
+
+
+
+
+</body>
+</html>
